@@ -72,7 +72,7 @@ Vagrant.configure(2) do |config|
             :dbuser => "wordpress",
             :dbpass => "wordpress",
             :dbhost => "127.0.0.1",
-            :title => "news",
+            :title => "corp",
             :url => "192.168.33.20",
             :admin_user => "admin",
             :admin_password => "admin",
