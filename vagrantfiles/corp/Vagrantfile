@@ -1,0 +1,85 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.provider :virtualbox do |vb|
+    vb.customize ["modifyvm", :id, "--memory", 2048]
+    vb.customize ["modifyvm", :id, "--natdnsproxy1", "off"]
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "off"]
+  end
+
+  config.vbguest.auto_update = false
+
+  # OS
+  config.vm.box = "centos6.5"
+  config.vm.box_url = "https://github.com/2creatives/vagrant-centos/releases/download/v6.5.3/centos65-x86_64-20140116.box"
+
+  #ssh
+  config.ssh.insert_key = false
+
+  # Networking
+  config.vm.hostname = "corp"
+  config.vm.network :private_network, ip: "192.168.33.20"
+
+  # Source Folder
+  config.vm.synced_folder "./", "/share", \
+      create: true, owner: "vagrant", group: "vagrant", \
+      mount_options: ["dmode=777,fmode=777"]
+
+  # Provision
+  config.omnibus.chef_version = :latest
+
+  # Chef
+  config.vm.provision "chef_zero" do |chef|
+    chef.cookbooks_path = ["../../cookbooks/"]
+
+    chef.add_recipe "mysql::default"
+    chef.add_recipe "wordpress::setup-proto"
+    chef.add_recipe "php::composer"
+    chef.add_recipe "php::phpunit"
+    chef.add_recipe "phpmyadmin::default"
+
+    chef.json = {
+        :mysql => {
+            :user => "wordpress",
+            :password => "wordpress",
+            :database => "wordpress"
+        },
+        :nginx => {
+            :root => "/share/wordpress",
+            :conf => "wordpress/wp-standalone.conf",
+            :ssl => {
+                :key => "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAwnbFfXeqkIXczmY3MEV8zVHQMR5GXi69MaGdvHAtI78Cpl4d\nBEAwoFzInh9oldR+izouPdAo0Vn4INH08F/UoAD+YIivqLnsbugZUYA1yZeuXfYz\nOO3XyL8ULngvx7CZDoZQS7zZiyYi8euT0h3fVdqK3SrL33vruMMFyPjI2dxwtTqj\nytymbuM5j6OrDvZ8dbnpc4y2BP/O56ya4QsGZJXK8t9KIcDEPanpNPF7HB8tvMTx\nFCFCIx34mHTMiEmy0lkFP0FK3z6WERg2+MizcbxrK6vEVKdmagnGPGpFTUfCd7lE\nkyzLyK//DwOzxH3cmMKZzeL/zXyMM5l0SW+dgQIDAQABAoIBADBT0gq3VZUrH0/Q\nCUEe08A259V9H6HCXdRaxNeSzTUIAEGWPAHVbgA8bsMVLSmnMHerUtibxbkZcde+\nNfAS8MV+2bjl3znAUujRF5Gwmi1qW7QQPnSUbz79daeCyOUIl1ELwiLAYRP6u06B\n7C+YqussL7x9KUN2CYPWO7bRVSEG/rqUInp7CAbiVlDJkJGTKoWVgTeJ4Bve6Ec6\nKYj0k6H6U68OLV2Fws28ntOtpSqKgMuPYmlVwbNSZqqt5UlliL83Ra83Nbfl9Ryj\neqeduvQ4rZ5g7EsJZXX0LXCehDlcoj+QG5glntrL8t0PQgNUXF8NOIFhADkJhOoS\nkqLYddECgYEA/xM95E5enHnJR2HZMHdK9EMWTZWeYLNNlr/s4Ihh+ML54SXvAdQy\n8nduz5QBNmn9qr7njAkZrXJlhgruKP+vB75TThQNRESAyF6s7r4SU9d3OMwrNjCg\nhAHmcW1whTQ8rQMDtLor6GIhpd4NtQjKA+jGPql6t3ImGM8FmaZr020CgYEAwytF\nXVE+c417cSW6vVA8U0No67bGnomvArIvySKarX2tnfyA7dmpqqz7Im0TxyMWCD+U\nRlWb8WjvPaUD/agHArXW5Joci0dkxrl3mbnZhpmRmtGTR9WhTnaCj5DXwTMzS/aI\n54jimXzc8awICcocMAa1bWmzR54Qnb5mCl2uUeUCgYApljyIBZL9VgnP/o8HjNuG\nmY2AVr18rJ8gzefT78hxY3CUGbgvBybLS1egtlPASGWYOgnMVgt+sOEGiq+rtYwW\n6hvw5eoH0Fdi07TEM+8PBlkkxHzjF+iDvT+SDLLEtPCTkKNBCv1vpNgxj9OSSX2O\nR5xSyRT95bl6X/5cv7pivQKBgQCQOLCYZcn9f8aBdT0KWnlJmh21WapqSxodpujy\n+/RLUfzzKz1nBhp/ujYWWX5tAHtuevUqCGclPMLVzdQmJH2RviffZBbFwWsyAqnj\n2ldpRKA5RLdONQpvPdn7FzCoXxp//t1qI1g3zfJDUDncahLsVnjJMnu954sl1iX3\ncQS5FQKBgQDw6PYOmWpZBVK6vIE8ZAd5clfQlyGeW5r9AaTrnlym8VdeCrysUaJ1\nE6MfjPGSQcoWwLho+EMo8HMV44ylWzmKerX69vVvD6AD3qpUkIf3tQnjs+/0gd2f\np/nACM5HrHrIg8TzRGxqJa4fqlgI2c1yYCXeJ1rOiQBaH2lzaQA8BA==\n-----END RSA PRIVATE KEY-----\n",
+                :cert => "-----BEGIN CERTIFICATE-----\nMIIDBjCCAe4CCQCYhd9i+3LFAzANBgkqhkiG9w0BAQUFADBFMQswCQYDVQQGEwJB\nVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0\ncyBQdHkgTHRkMB4XDTE2MDEwODA2MjAwMloXDTI2MDEwNTA2MjAwMlowRTELMAkG\nA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0\nIFdpZGdpdHMgUHR5IEx0ZDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB\nAMJ2xX13qpCF3M5mNzBFfM1R0DEeRl4uvTGhnbxwLSO/AqZeHQRAMKBcyJ4faJXU\nfos6Lj3QKNFZ+CDR9PBf1KAA/mCIr6i57G7oGVGANcmXrl32Mzjt18i/FC54L8ew\nmQ6GUEu82YsmIvHrk9Id31Xait0qy99767jDBcj4yNnccLU6o8rcpm7jOY+jqw72\nfHW56XOMtgT/zuesmuELBmSVyvLfSiHAxD2p6TTxexwfLbzE8RQhQiMd+Jh0zIhJ\nstJZBT9BSt8+lhEYNvjIs3G8ayurxFSnZmoJxjxqRU1Hwne5RJMsy8iv/w8Ds8R9\n3JjCmc3i/818jDOZdElvnYECAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAu8zkgFrn\nevYeAh8Lh2yqiPCmtU+9PM9QzalZtjZ+/CD7awSfINSeRoVCk4A/iolEIJ80N//n\nYHWdARwr76gK/GnXrF6sP64sZQKnr5XLVksARoUDsx31mJwJIbYu9K+N6UwgkGa1\nGrRrhdJG3RcmBjWPAgbXXgV+f7G/a/jqXh3mdzr2jQnnEzNxb9lhVrmyovL0OXLG\nhYGOFFriY/oQw6dIBROLO4fRmfd+NkioDPQzFjyXT0s0MSDtgwRHh/AFaziS3pg6\n+TbRR+eDp7YMaJ3zXjrv+aeKpY3WVdx6/sS/9ENqbMklvrFykbelwWPt7+9VogsQ\nscI1N/Gucu96LA==\n-----END CERTIFICATE-----"
+            },
+            :aliases => [
+                {
+                    :location => "/phpMyAdmin",
+                    :alias => "/usr/share/phpMyAdmin/",
+                    :index => "index.php"
+                }
+            ]
+        },
+        :php => {
+            :xdebug => true,
+            :xdebug_remote_host => "192.168.33.1"
+        },
+        :wordpress => {
+            :version => "4.3.1",
+            :install_user => "nginx",
+            :install_path => "/share/wordpress",
+            :dbname => "wordpress",
+            :dbuser => "wordpress",
+            :dbpass => "wordpress",
+            :dbhost => "127.0.0.1",
+            :title => "news",
+            :url => "192.168.33.20",
+            :admin_user => "admin",
+            :admin_password => "admin",
+            :admin_email => "takayuki_imanishi@petgo.co.jp",
+            :plugins => []
+        }
+    }
+  end
+
+end
